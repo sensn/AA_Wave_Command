@@ -65,11 +65,24 @@ public class WaveReader {
         byte[] header = new byte[44];
          sr = new byte[4];
        header= Arrays.copyOfRange(arr, 0, 44);
+
         for (int i = 27,j=0; i > 23; i--,j++){
             sr[j] = header[i];
            // System.out.printf("i" + j);
         }
         return header;
+    }
+
+    public  byte[] reverseWave(byte[] arr){
+        int len = arr.length;
+        byte[] flipArray = new byte[arr.length];
+        for (int i = 0; i < 45; i++) {
+            flipArray[i] = arr[i];
+        }
+        for(int i = len-1, j = 45;i > 44; i--, j++){
+            flipArray[j] = arr[i];
+        }
+        return flipArray;
     }
 
 
