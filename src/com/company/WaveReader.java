@@ -1,13 +1,14 @@
 package com.company;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.util.Arrays;
 
 public class WaveReader {
     private static final int HEADER_SIZE = 44;
     public  WavHeader header = new WavHeader();
     private byte[] buf = new byte[HEADER_SIZE];
-
+    byte[] sr;
     public WavHeader read() throws IOException {
 //        int res = inputStream.read(buf);
 //        if (res != HEADER_SIZE) {
@@ -17,14 +18,11 @@ public class WaveReader {
         if (new String(header.getChunkID()).compareTo("RIFF") != 0) {
             throw new IOException("Illegal format.");
         }
-        int i= ((byte) buf[24]<<24)&0xff000000|
-                (buf[25]<<16)&0x00ff0000|
-                (buf[26]<< 8)&0x0000ff00;
-        System.out.println(i);
-        int ii= ((byte) buf[24]<<24)|
-                (buf[25]<<16)|
-                (buf[26]<< 8);
-        System.out.println(ii);
+        int samplrate = ((buf[27] & 0xFF) << 24) | ((buf[26] & 0xFF) << 16)    //Get samplerate: Convert Byte array to Int - reversed order.
+                | ((buf[25] & 0xFF) << 8) | (buf[24] & 0xFF);
+       // System.out.println("iii: "+iii);
+     //   System.out.println(new BigInteger(1,Arrays.copyOfRange(buf, 23, 27)).intValue());
+      //  System.out.println(new BigInteger(sr).intValue());
 
         header.setChunkSize(toInt(4, false));
         header.setFormat(Arrays.copyOfRange(buf, 8, 12));
@@ -32,9 +30,10 @@ public class WaveReader {
         header.setSubChunk1Size(toInt(16, false));
         header.setAudioFormat(toShort(20, false));
         header.setNumChannels(toShort(22, false));
-      // header.setSampleRate ((int) (Arrays.copyOfRange(buf, 24, 27));
-       // header.setSampleRate(toInt(24, false));
-        header.setSampleRate(i);
+        //header.setSampleRate ((int) (Arrays.copyOfRange(buf, 24, 27));    44100 == 0x00ac44, 4500480 == 0x44ac00
+        //header.setSampleRate(toInt(24, false));    //ORIG
+        //header.setSampleRate(new BigInteger(sr).intValue());   //WORKS
+        header.setSampleRate(samplrate);                   //WORKS
         header.setByteRate(toInt(28, false));
         header.setBlockAlign(toShort(32, false));
         header.setBitsPerSample(toShort(34, false));
@@ -62,12 +61,14 @@ public class WaveReader {
 
 
     //
-    public static byte[] getHeaderBuf(byte[] arr){
+    public  byte[] getHeaderBuf(byte[] arr){
         byte[] header = new byte[44];
+         sr = new byte[4];
        header= Arrays.copyOfRange(arr, 0, 44);
-//        for (int i = 0; i < 44; i++){
-//            header[i] = arr[i];
-//        }
+        for (int i = 27,j=0; i > 23; i--,j++){
+            sr[j] = header[i];
+           // System.out.printf("i" + j);
+        }
         return header;
     }
 
@@ -88,7 +89,7 @@ public class WaveReader {
 
     public  void wavload() {
         try {
-            File f = new File("C:\\Users\\ATN_70\\IdeaProjects\\AA_Wave_Command\\test.wav");
+            File f = new File("C:\\Users\\ATN_70\\IdeaProjects\\AA_Wave_Command\\test2.wav");
             byte[] origfile = getBytes(f);
 
             for(byte test :origfile){
