@@ -3,12 +3,22 @@ package com.company;
 import java.io.*;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class WaveReader {
+    private byte[] origfile;
+    private byte[] buf = new byte[HEADER_SIZE];
+    private byte[] rawPCMdata;
+    private byte[] reversedRawPCMdata;
+    private byte[] trimedRawPCMdata;
+    private byte[] editedRawPCMdata;
+    private byte[] editedWaveFile;
+    private byte[] sr;
     private static final int HEADER_SIZE = 44;
     public  WavHeader header = new WavHeader();
-    private byte[] buf = new byte[HEADER_SIZE];
-    byte[] sr;
+
+
     public WavHeader read() throws IOException {
 //        int res = inputStream.read(buf);
 //        if (res != HEADER_SIZE) {
@@ -58,33 +68,102 @@ public class WaveReader {
         }
         return (short) ((buf[start] << 8) + (buf[start + k * 1]));
     }
-
-
     //
+    public void trim(int startsamp,int endsamp){
+    trimRawPCMData(editedRawPCMdata,startsamp,endsamp);
+        editedRawPCMdata= new byte [trimedRawPCMdata.length];
+        editedRawPCMdata=Arrays.copyOfRange(trimedRawPCMdata,0, rawPCMdata.length);
+    }
+
+    public void reverse() {
+        reverseRawPCMData(editedRawPCMdata);
+        editedRawPCMdata= new byte [reversedRawPCMdata.length];
+        editedRawPCMdata=Arrays.copyOfRange(reversedRawPCMdata,0, rawPCMdata.length);
+    }
+
+
+
+
     public  byte[] getHeaderBuf(byte[] arr){
         byte[] header = new byte[44];
-         sr = new byte[4];
+         sr = new byte[4];                             // buffer for Sample rate Chunk
        header= Arrays.copyOfRange(arr, 0, 44);
 
         for (int i = 27,j=0; i > 23; i--,j++){
-            sr[j] = header[i];
-           // System.out.printf("i" + j);
+            sr[j] = header[i];                 // get Samplerate Chunk Reversed order
         }
         return header;
     }
 
-    public  byte[] reverseWave(byte[] arr){
+    public byte[] getRawPCMData(byte[] arr){
+        byte[] rawPCMData = new byte[arr.length];
+        rawPCMData = Arrays.copyOfRange(arr, 44, arr.length);
+        return rawPCMData;
+    }
+
+    public void trimRawPCMData(byte[] theRawPCMData ,int startsamp, int endsamp){
+        trimedRawPCMdata=Arrays.copyOfRange(theRawPCMData, startsamp,endsamp);
+    }
+
+    public  byte[] reverseRawPCMData(byte[] arr){
         int len = arr.length;
         byte[] flipArray = new byte[arr.length];
-        for (int i = 0; i < 45; i++) {
-            flipArray[i] = arr[i];
+        reversedRawPCMdata=new byte[arr.length];
+
+         List<byte[]> byteList = Arrays.asList( arr);
+         Collections.reverse(byteList);  // Reversing list will also reverse the array
+//        reversedRawPCMdata=arr;
+//       for(int i = len-1, j = 0; i >= 0; i--, j++){      //Write it in reversed order
+//            flipArray[j] = arr[i];
+//           reversedRawPCMdata[j] = arr[i];
+//        }
+
+        int bytesPerSample=4;              //https://medium.com/swlh/reversing-a-wav-file-in-c-482fc3dfe3c4
+        int sampleIdentifier = 0;
+        for (int i = 0; i < len; i++)
+        {
+            if (i != 0 && i % bytesPerSample == 0)
+            {
+                sampleIdentifier += 2 * bytesPerSample;
+            }
+            int index = len - bytesPerSample - sampleIdentifier + i;
+            reversedRawPCMdata[i] =  arr[index];
         }
-        for(int i = len-1, j = 45;i > 44; i--, j++){
-            flipArray[j] = arr[i];
-        }
+
+
+//4 bytes
+     //   You actually need to reverse the frames, where the frame size is dependent on the bytes-per-sample and whether the file is stereo or mono (for example, if the file is stereo and 2 bytes per sample, then each frame is 4 bytes).
+
         return flipArray;
     }
 
+    public void  createWaveFile(){
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            outputStream.write(buf); //header Data
+            outputStream.write(editedRawPCMdata);
+            editedWaveFile = outputStream.toByteArray();
+//            File dstFile = new File("dst.wav");
+//            FileOutputStream out = new FileOutputStream(dstFile);
+//
+//            int len;
+//            while ((len = in.read(buf)) > 0) {
+//                out.write(buf, 0, len);
+//            }
+//
+//            in.close();
+//            out.close();
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try (FileOutputStream stream = new FileOutputStream("C:\\Users\\ATN_70\\IdeaProjects\\AA_Wave_Command\\dest4.wav")) {
+            stream.write(editedWaveFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+      //  FileUtils.writeByteArrayToFile(new File("pathname"), myByteArray)
+    }
 
     public static byte[] getBytes(File f) throws FileNotFoundException, IOException{
         byte[] buffer = new byte[(int) f.length()];
@@ -100,19 +179,26 @@ public class WaveReader {
     }
 
 
-    public  void wavload() {
+    public  void wavload(String filename) {
         try {
-            File f = new File("C:\\Users\\ATN_70\\IdeaProjects\\AA_Wave_Command\\test2.wav");
-            byte[] origfile = getBytes(f);
+            File f = new File(filename);
+            //File f = new File("C:\\Users\\ATN_70\\IdeaProjects\\AA_Wave_Command\\test.wav");
+             origfile = getBytes(f);
 
             for(byte test :origfile){
              //   System.out.println(test);
             }
-            buf=getHeaderBuf(origfile);
+            buf=getHeaderBuf(origfile);    //get Header Bytes (44)
+            rawPCMdata=getRawPCMData(origfile);
+            editedRawPCMdata= new byte [rawPCMdata.length];
+            editedRawPCMdata=getRawPCMData(origfile);
+
         }catch (Exception e){
             System.out.println(e.getMessage());
 
         }
 
     }
+
+
 }
