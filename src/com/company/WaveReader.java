@@ -2,6 +2,8 @@ package com.company;
 
 import java.io.*;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -52,11 +54,15 @@ public class WaveReader {
         return header;
     }
 private void chunkbytes(int value){
-    buf[18] = (byte) (value & 0xFF);
-    buf[17] = (byte) ((value >> 8) & 0xFF);
-    buf[16] = (byte) ((value >> 16) & 0xFF);
-    buf[15] = (byte) ((value >> 24) & 0xFF);
+     buf[7]= (byte) (value >> 24);
+     buf[6]= (byte) (value >> 16);
+     buf[5]= (byte) (value >> 8);
+     buf[4]= (byte) (value /*>> 0*/);
 
+    buf[43]= (byte) ((value-44) >> 24);
+    buf[42]= (byte) ((value-44) >> 16);
+    buf[41]= (byte) ((value-44) >> 8);
+    buf[40]= (byte) ((value-44) /*>> 0*/);
 
 }
     private int toInt(int start, boolean endian) {
@@ -82,7 +88,7 @@ private void chunkbytes(int value){
         editedRawPCMdata=Arrays.copyOfRange(trimedRawPCMdata,0, endsamp);
         header.setChunkSize(endsamp+44);
         header.setSubChunk2Size(endsamp); //10551122
-        chunkbytes(endsamp+44);
+        chunkbytes((int)(endsamp+44));
         //buf[16]=(byte)(endsamp+44);
     }
 

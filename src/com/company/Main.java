@@ -76,13 +76,15 @@ public class Main {
                 System.out.println("REVERSEME");
                 //waveReader2.trim();
             }
-            System.out.println("INFO ABOUT CREATED FILE: ");
-            waveReader3 = new WaveReader();
-            waveReader3.wavload("dest5.wav");
-            waveReader3.read();
-            System.out.println(waveReader3.header.toString());
+
         }
-waveReader2.createWaveFile();
+        waveReader2.createWaveFile();
+        System.out.println("INFO ABOUT CREATED FILE: ");
+        waveReader3 = new WaveReader();
+        waveReader3.wavload("dest5.wav");
+        waveReader3.read();
+        System.out.println(waveReader3.header.toString());
+
     }
           //  main.run();    JCONMMANDER
 
