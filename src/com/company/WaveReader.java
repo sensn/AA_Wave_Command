@@ -51,7 +51,14 @@ public class WaveReader {
         header.setSubChunk2Size(toInt(40, false));
         return header;
     }
+private void chunkbytes(int value){
+    buf[18] = (byte) (value & 0xFF);
+    buf[17] = (byte) ((value >> 8) & 0xFF);
+    buf[16] = (byte) ((value >> 16) & 0xFF);
+    buf[15] = (byte) ((value >> 24) & 0xFF);
 
+
+}
     private int toInt(int start, boolean endian) {
         int k = (endian) ? 1 : -1;
         if (!endian) {
@@ -72,13 +79,17 @@ public class WaveReader {
     public void trim(int startsamp,int endsamp){
     trimRawPCMData(editedRawPCMdata,startsamp,endsamp);
         editedRawPCMdata= new byte [trimedRawPCMdata.length];
-        editedRawPCMdata=Arrays.copyOfRange(trimedRawPCMdata,0, rawPCMdata.length);
+        editedRawPCMdata=Arrays.copyOfRange(trimedRawPCMdata,0, endsamp);
+        header.setChunkSize(endsamp+44);
+        header.setSubChunk2Size(endsamp); //10551122
+        chunkbytes(endsamp+44);
+        //buf[16]=(byte)(endsamp+44);
     }
 
     public void reverse() {
         reverseRawPCMData(editedRawPCMdata);
         editedRawPCMdata= new byte [reversedRawPCMdata.length];
-        editedRawPCMdata=Arrays.copyOfRange(reversedRawPCMdata,0, rawPCMdata.length);
+        editedRawPCMdata=Arrays.copyOfRange(reversedRawPCMdata,0, reversedRawPCMdata.length);
     }
 
 
@@ -107,18 +118,18 @@ public class WaveReader {
 
     public  byte[] reverseRawPCMData(byte[] arr){
         int len = arr.length;
-        byte[] flipArray = new byte[arr.length];
-        reversedRawPCMdata=new byte[arr.length];
+       byte[] flipArray = new byte[arr.length];
+        reversedRawPCMdata=new byte[arr.length+1];
 
-         List<byte[]> byteList = Arrays.asList( arr);
-         Collections.reverse(byteList);  // Reversing list will also reverse the array
+        // List<byte[]> byteList = Arrays.asList( arr);
+        // Collections.reverse(byteList);  // Reversing list will also reverse the array
 //        reversedRawPCMdata=arr;
 //       for(int i = len-1, j = 0; i >= 0; i--, j++){      //Write it in reversed order
 //            flipArray[j] = arr[i];
 //           reversedRawPCMdata[j] = arr[i];
 //        }
 
-        int bytesPerSample=4;              //https://medium.com/swlh/reversing-a-wav-file-in-c-482fc3dfe3c4
+        int bytesPerSample=(header.getBitsPerSample()/8)*header.getNumChannels();              //https://medium.com/swlh/reversing-a-wav-file-in-c-482fc3dfe3c4
         int sampleIdentifier = 0;
         for (int i = 0; i < len; i++)
         {
@@ -157,7 +168,7 @@ public class WaveReader {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        try (FileOutputStream stream = new FileOutputStream("C:\\Users\\ATN_70\\IdeaProjects\\AA_Wave_Command\\dest4.wav")) {
+        try (FileOutputStream stream = new FileOutputStream("dest5.wav")) {
             stream.write(editedWaveFile);
         } catch (IOException e) {
             e.printStackTrace();

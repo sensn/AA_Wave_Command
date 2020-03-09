@@ -12,6 +12,7 @@ import java.util.Map;
 public class Main {
     private WaveReader waveReader;
     private static WaveReader waveReader2;
+    private static WaveReader waveReader3;
     private static String filename;
     private static boolean cutme= false;
 
@@ -25,8 +26,8 @@ public class Main {
     int length;
  //   @Parameter(names={"--reverse", "-r"}, validateWith = PositiveInteger.class)
  //   int pattern;
-    @Parameter(names={"--reverse", "-r"}, description = "Reverse File")
-    private boolean reverse = false;
+  //  @Parameter(names={"--reverse", "-r"}, description = "Reverse File")
+   // private boolean reverse = false;
     public static void main(String ... argv) throws IOException {
 //        Main main = new Main();
 //        JCommander.newBuilder()
@@ -34,7 +35,8 @@ public class Main {
 //                .build()
 //                .parse(argv);
 
-        waveReader2 = new WaveReader();
+        waveReader2 = new WaveReader();    //input file
+        waveReader3 = new WaveReader();    // display header of output file
 //        for(String s : argv) {
 //            if (s.contains(".wav")) {
 //                filename = s;
@@ -74,7 +76,11 @@ public class Main {
                 System.out.println("REVERSEME");
                 //waveReader2.trim();
             }
-
+            System.out.println("INFO ABOUT CREATED FILE: ");
+            waveReader3 = new WaveReader();
+            waveReader3.wavload("dest5.wav");
+            waveReader3.read();
+            System.out.println(waveReader3.header.toString());
         }
 waveReader2.createWaveFile();
     }
@@ -90,9 +96,9 @@ waveReader2.createWaveFile();
 
             waveReader.read();
             System.out.println(waveReader.header.toString());
-            if (reverse){
-                System.out.printf(" Reverse me!");
-            }
+          //  if (reverse){
+             //   System.out.printf(" Reverse me!");
+          //  }
         }
     }
 
